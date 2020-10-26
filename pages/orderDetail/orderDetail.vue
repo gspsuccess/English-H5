@@ -6,17 +6,17 @@
 					商品信息
 				</view>
 			</tui-list-cell>
-			<block v-for="(item,index) in 1" :key="index">
+			<block v-for="(item,index) in order.suborderinfo" :key="index">
 				<tui-list-cell padding="0">
 					<view class="tui-goods-item">
-						<image :src="`/static/images/mall/product/${index+3}.jpg`" class="tui-goods-img"></image>
+						<image :src="item.thisproduct__image|formatImage" class="tui-goods-img"></image>
 						<view class="tui-goods-center">
-							<view class="tui-goods-name">欧莱雅（LOREAL）奇焕光彩粉嫩透亮修颜霜 30ml（欧莱雅彩妆 BB霜 粉BB 遮瑕疵 隔离）</view>
-							<view class="tui-goods-attr">黑色，50ml</view>
+							<view class="tui-goods-name">{{item.thisproduct__name}}</view>
+							<view class="tui-goods-attr"></view>
 						</view>
 						<view class="tui-price-right">
-							<view>￥298.00</view>
-							<view>x1</view>
+							<view>￥{{item.thisproduct__trueprice}}</view>
+							<view>x{{item.num}}</view>
 						</view>
 					</view>
 				</tui-list-cell>
@@ -24,22 +24,20 @@
 			<view class="tui-goods-info">
 				<view class="tui-price-flex tui-size24">
 					<view>商品总额</view>
-					<view>￥1192.00</view>
+					<view>￥{{order.suborderinfo|sumOrderResult}}</view>
 				</view>
 				<view class="tui-price-flex tui-size32 tui-pbtm20">
 					<view class="tui-flex-shrink">合计</view>
 					<view class="tui-goods-price">
 						<view class="tui-size-24">￥</view>
-						<view class="tui-price-large">1192</view>
-						<view class="tui-size-24">.00</view>
+						<view class="tui-price-large">{{order.suborderinfo|sumOrderResult}}</view>
 					</view>
 				</view>
-				<view class="tui-price-flex tui-size32">
+				<view class="tui-price-flex tui-size32" v-if="!repeatPay">
 					<view class="tui-flex-shrink">实付款</view>
 					<view class="tui-goods-price tui-primary-color">
 						<view class="tui-size-24">￥</view>
-						<view class="tui-price-large">1192</view>
-						<view class="tui-size-24">.00</view>
+						<view class="tui-price-large">{{order.suborderinfo|sumOrderResult}}</view>
 					</view>
 				</view>
 			</view>
@@ -54,38 +52,125 @@
 			<view class="tui-order-content">
 				<view class="tui-order-flex">
 					<view class="tui-item-title">订单号:</view>
-					<view class="tui-item-content">48690010100035</view>
+					<view class="tui-item-content">{{order.ordernum}}</view>
 				</view>
 				<view class="tui-order-flex">
 					<view class="tui-item-title">创建时间:</view>
-					<view class="tui-item-content">2019-05-26 10:36</view>
+					<view class="tui-item-content">{{order.date_joined}}</view>
 				</view>
 				<view class="tui-order-flex">
 					<view class="tui-item-title">付款时间:</view>
 					<view class="tui-item-content">2019-05-26 10:44</view>
 				</view>
 				<view class="tui-order-flex">
-					<view class="tui-item-title">订单备注:</view>
-					<view class="tui-item-content">麻烦尽快发货，打包包裹时请多拿几个泡沫放在纸箱盒内，防止摔碎</view>
+					<view class="tui-item-title">订单状态:</view>
+					<view class="tui-item-content">{{order.status|formatStatus}}</view>
 				</view>
 			</view>
 		</view>
 		<view class="tui-safe-area"></view>
+		<view class="tui-tabbar" v-if="repeatPay">
+			<view class="tui-flex-end tui-color-red tui-pr-20">
+				<view class="tui-black">实付金额:</view>
+				<view class="tui-size-26">￥</view>
+				<view class="tui-price-large">{{order.suborderinfo|sumOrderResult}}</view>
+			</view>
+			<view class="tui-pr25">
+				<tui-button width="200rpx" height="70rpx" :size="28" type="danger" shape="circle" @click="btnPay">确认支付</tui-button>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script>
 	export default {
+		filters:{
+			formatStatus(value){
+				const status_arr = ['待支付','已支付','支付失败','订单关闭']
+				return status_arr[value]
+			},
+			formatImage(value){
+				return 'https://chinanets.cn/media' + value.split('all_media')[1]
+			},
+			sumOrderResult(value){
+				let result = 0
+				for(let item of value){
+					result += item.thisproduct__trueprice * item.num
+				}
+				
+				return result
+			}
+		},
 		data() {
 			return {
-				webURL: "https://www.thorui.cn/wx/static/images/mall/order/",
-				//1-待付款 2-付款成功 3-待收货 4-订单已完成 5-交易关闭
-				status: 1,
-				show: false
+				id:0,
+				order:{},
+				status: 1
+			}
+		},
+		onLoad(option) {
+			this.id = option.id
+			this.getOne()
+		},
+		computed:{
+			repeatPay(){
+				return this.order.status === 0 || this.order.status == 2
 			}
 		},
 		methods: {
-			
+			getOne(){
+				let orderlist = uni.getStorageSync('orderlist')
+				this.order = orderlist.find(item => item.id == this.id)
+				console.log(this.order)
+			},
+			btnPay() {
+				let postData = {
+					proid:this.order.suborderinfo[0].thisproduct_id,
+					subid:this.order.id,
+					ordernum:this.order.ordernum
+				}
+				this.tui.request('/order/payorder','POST',postData).then((res) => {
+					if(res.code === 1) {
+						this.wxpay(res.results)
+					} else {
+						this.tui.toast('该订单已经支付过了')
+					}
+				}).then((err) => {
+					console.log(err)
+				})
+			},
+			wxpay(data){
+				data.appId = 'wxab7a67328ad3052d'
+				const jweixin = require('jweixin-module');
+				jweixin.config({
+					debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来
+					appId: data.appId, // 必填，公众号的唯一标识
+					timestamp: data.timeStamp.toString(), // 必填，生成签名的时间戳
+					nonceStr: data.nonceStr, // 必填，生成签名的随机串
+					signature: data.signature, // 必填，签名
+					jsApiList: ['chooseWXPay'] // 必填，需要使用的JS接口列表
+				});
+				
+				jweixin.ready(() => {
+					jweixin.chooseWXPay({
+						timestamp: data.timeStamp.toString(), 
+						nonceStr:data.nonceStr, // 支付签名随机串，不长于 32 位
+						package: 'prepay_id=' + data.prepay_id, // 统一支付接口返回的prepay_id参数值
+						signType: data.signType, // 签名方式，默认为'SHA1'，使用新版支付需传入'MD5'
+						paySign: data.paySign, // 支付签名
+						success:(res) => {//支付成功回调
+							if(res.errMsg === 'chooseWXPay:ok'){
+								this.tui.href('/pages/orderResult/orderResult?id='+this.id);
+							} else {
+								this.tui.toast('支付失败，请重新发起支付')
+							}						
+						},
+						fail:(err) => {
+							this.tui.toast('支付失败，请重新发起支付')
+						}
+					});
+				});
+			}
 		}
 	}
 </script>
@@ -289,10 +374,11 @@
 		font-size: 24rpx;
 		line-height: 24rpx;
 	}
-
+	
 	.tui-price-large {
-		font-size: 32rpx;
-		line-height: 30rpx;
+		font-size: 34rpx;
+		line-height: 32rpx;
+		font-weight: 600;
 	}
 
 	.tui-goods-info {
@@ -405,5 +491,45 @@
 
 	.tui-btn-mr {
 		margin-right: 30rpx;
+	}
+	
+	.tui-pr-30 {
+		padding-right: 30rpx;
+	}
+	
+	.tui-pr-20 {
+		padding-right: 20rpx;
+	}
+	
+	.tui-none-addr {
+		height: 80rpx;
+		padding-left: 5rpx;
+		display: flex;
+		align-items: center;
+	}
+	
+	.tui-addr-img {
+		width: 36rpx;
+		height: 46rpx;
+		display: block;
+		margin-right: 15rpx;
+	}
+	
+	
+	.tui-pr25 {
+		padding-right: 25rpx;
+	}
+	.tui-flex-end {
+		display: flex;
+		align-items: flex-end;
+		padding-right: 0;
+	}
+	.tui-black {
+		color: #222;
+		line-height: 30rpx;
+	}
+	.tui-size-26 {
+		font-size: 26rpx;
+		line-height: 26rpx;
 	}
 </style>

@@ -4,14 +4,14 @@
 		<view class="tui-banner-swiper">
 			<swiper :autoplay="true" :interval="5000" :duration="150" :circular="true" :style="{ height: scrollH + 'px' }"
 			 @change="bannerChange">
-				<block v-for="(item, index) in banner" :key="index">
+				<block v-for="(item, index) in product.banner" :key="index">
 					<swiper-item :data-index="index" @tap.stop="previewImage">
 						<image :src="item" class="tui-slide-image" :style="{ height: scrollH + 'px' }" />
 					</swiper-item>
 				</block>
 			</swiper>
 			<view class="tui-banner-tag">
-				<tui-tag padding="12rpx 18rpx" type="translucent" shape="circleLeft" :scaleMultiple="0.82" originRight>{{ bannerIndex + 1 }}/{{ banner.length }}</tui-tag>
+				<tui-tag padding="12rpx 18rpx" type="translucent" shape="circleLeft" :scaleMultiple="0.82" originRight>{{ bannerIndex + 1 }}/{{ product.banner.length }}</tui-tag>
 			</view>
 		</view>
 		<!--banner-->
@@ -22,7 +22,7 @@
 					<view class="tui-pro-price">
 						<view>
 							<text>￥</text>
-							<text class="tui-price">1849</text>
+							<text class="tui-price">{{product.trueprice}}</text>
 							<text>.00</text>
 						</view>
 						<tui-tag padding="10rpx 20rpx" size="24rpx" plain type="high-green" shape="circle" :scaleMultiple="0.8">新品</tui-tag>
@@ -34,13 +34,15 @@
 				</view>
 				<view class="tui-original-price tui-gray">
 					价格
-					<text class="tui-line-through">￥2199.00</text>
+					<text class="tui-line-through">￥{{product.lineprice}}</text>
 				</view>
 				<view class="tui-pro-titbox">
-					<view class="tui-pro-title">Linux内核技术实战课</view>
+					<view class="tui-pro-title">{{product.name}}</view>
 				</view>
 				<view class="tui-padding">
-					<view class="tui-sub-title tui-size tui-gray">此商品将于2020-08-28,10点结束闪购特卖，入手需及时</view>
+					<view class="tui-sub-title tui-size tui-gray">
+						{{product.brief}}
+					</view>
 					<view class="tui-sale-info tui-size tui-gray">
 						<view>五星好评</view>
 						<view>月销2000</view>
@@ -53,8 +55,7 @@
 				<tui-nomore text="课程详情" backgroundColor="#f7f7f7"></tui-nomore>
 			</view>
 			<view class="tui-product-img tui-radius-all">
-				<image :src="'https://www.thorui.cn/img/detail/' + (index + 1) + '.jpg'" v-for="(img, index) in 20" :key="index"
-				 mode="widthFix"></image>
+				{{product.detail}}
 			</view>
 			<tui-nomore text="已经到最底了" backgroundColor="#f7f7f7"></tui-nomore>
 			<view class="tui-safearea-bottom"></view>
@@ -67,9 +68,9 @@
 					<tui-icon name="kefu" :size="22" color="#333"></tui-icon>
 					<view class="tui-operation-text tui-scale-small">联系客服</view>
 				</view>
-				<view class="tui-operation-item" hover-class="tui-opcity" :hover-stay-time="150">
+				<view class="tui-operation-item" hover-class="tui-opcity" :hover-stay-time="150" @click="showList">
 					<tui-icon name="shop" :size="22" color="#333"></tui-icon>
-					<view class="tui-operation-text tui-scale-small">课程列表</view>
+					<view class="tui-operation-text tui-scale-small">商品列表</view>
 				</view>
 			</view>
 			<view class="tui-operation-right tui-right-flex tui-col-7 tui-btnbox-4">
@@ -84,68 +85,21 @@
 
 <script>
 	export default {
+		filters:{
+			intval(value){
+				return parseInt(value)
+			}
+		},
 		data() {
 			return {
+				id:0,
+				product:{},
 				height: 64, //header高度
 				top: 26, //标题图标距离顶部距离
 				scrollH: 0, //滚动总高度
 				opcity: 0,
 				iconOpcity: 0.5,
-				banner: [
-					'https://www.thorui.cn/img/product/11.jpg',
-					'https://www.thorui.cn/img/product/2.png',
-					'https://www.thorui.cn/img/product/33.jpg',
-					'https://www.thorui.cn/img/product/4.png',
-					'https://www.thorui.cn/img/product/55.jpg',
-					'https://www.thorui.cn/img/product/6.png',
-					'https://www.thorui.cn/img/product/7.jpg',
-					'https://www.thorui.cn/img/product/8.jpg'
-				],
 				bannerIndex: 0,
-				topMenu: [{
-						icon: 'message',
-						text: '消息',
-						size: 26,
-						badge: 3
-					},
-					{
-						icon: 'home',
-						text: '首页',
-						size: 23,
-						badge: 0
-					},
-					{
-						icon: 'people',
-						text: '我的',
-						size: 26,
-						badge: 0
-					},
-					{
-						icon: 'cart',
-						text: '购物车',
-						size: 23,
-						badge: 2
-					},
-					{
-						icon: 'kefu',
-						text: '客服小蜜',
-						size: 26,
-						badge: 0
-					},
-					{
-						icon: 'feedback',
-						text: '我要反馈',
-						size: 23,
-						badge: 0
-					},
-					{
-						icon: 'share',
-						text: '分享',
-						size: 26,
-						badge: 0
-					}
-				],
-				menuShow: false,
 				popupShow: false,
 				value: 1,
 				collected: false
@@ -153,15 +107,15 @@
 		},
 		onLoad: function(options) {
 			let obj = {};
-			// #ifdef MP-WEIXIN
-			obj = wx.getMenuButtonBoundingClientRect();
-			// #endif
-			// #ifdef MP-BAIDU
-			obj = swan.getMenuButtonBoundingClientRect();
-			// #endif
-			// #ifdef MP-ALIPAY
-			my.hideAddToDesktopMenu();
-			// #endif
+			this.id = options.id
+			
+			let products = uni.getStorageSync('products').filter((value) => {
+				return value.id == this.id
+			})
+			if(products.length > 0){
+				this.product = products[0]
+				this.product.banner = ['https://chinanets.cn/media' + this.product.image.split('all_media')[1]]
+			}
 
 			setTimeout(() => {
 				uni.getSystemInfo({
@@ -175,103 +129,31 @@
 			}, 0);
 		},
 		methods: {
-			bannerChange: function(e) {
+			bannerChange(e) {
 				this.bannerIndex = e.detail.current;
 			},
-			previewImage: function(e) {
+			previewImage(e) {
 				let index = e.currentTarget.dataset.index;
 				uni.previewImage({
 					current: this.banner[index],
 					urls: this.banner
 				});
 			},
-			back: function() {
+			back() {
 				uni.navigateBack();
 			},
-			openMenu: function() {
-				this.menuShow = true;
-			},
-			closeMenu: function() {
-				this.menuShow = false;
-			},
-			showPopup: function() {
-				this.popupShow = true;
-			},
-			hidePopup: function() {
-				this.popupShow = false;
-			},
-			change: function(e) {
-				this.value = e.value;
-			},
-			collecting: function() {
+			collecting() {
 				this.collected = !this.collected;
 			},
-			common: function() {
-				this.tui.toast('功能开发中~');
-			},
-			btnTopMenu(index) {
-				this.closeMenu()
-				if (index == 4) {
-					uni.makePhoneCall({
-						phoneNumber: "10086"
-					})
-				} else if (index == 6) {
-                    // #ifdef MP
-                    this.common()
-                    // #endif
-					
-					// #ifndef MP
-					this.onShare()
-					// #endif
-				} else {
-					let url = {
-						0: '../message/message',
-						1: "../mall/mall",
-						2: '../my/my',
-						3: '../shopcart/shopcart',
-						5: '/pages/my/feedback/feedback?page=mall'
-					} [index];
-					url && this.tui.href(url)
-				}
+			showList(){
+				this.tui.href('/pages/list/list')
 			},
 			submit() {
 				this.popupShow = false;
 				uni.navigateTo({
-					url: '../submitOrder/submitOrder'
+					url: '../submitOrder/submitOrder?id=' + this.id
 				});
-			},
-			coupon() {
-				uni.navigateTo({
-					url: '../coupon/coupon'
-				});
-			},
-			onShare() {
-				//#ifdef APP-PLUS
-				plus.share.sendWithSystem({
-						content: 'ThorUI商城模板',
-						href: 'https://www.thorui.cn/'
-					},
-					function() {
-						console.log('分享成功');
-					},
-					function(e) {
-						console.log('分享失败：' + JSON.stringify(e));
-					}
-				);
-				//#endif
-				// #ifdef H5
-				location.href = "https://www.thorui.cn/"
-				// #endif
 			}
-		},
-		onPageScroll(e) {
-			let scroll = e.scrollTop <= 0 ? 0 : e.scrollTop;
-			let opcity = scroll / this.scrollH;
-			if (this.opcity >= 1 && opcity >= 1) {
-				return;
-			}
-			this.opcity = opcity;
-			this.iconOpcity = 0.5 * (1 - opcity < 0 ? 0 : 1 - opcity);
 		}
 	};
 </script>

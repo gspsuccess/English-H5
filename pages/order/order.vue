@@ -2,97 +2,111 @@
 	<view class="container">
 		<!--选项卡逻辑自己实现即可，此处未做处理-->
 		<view :class="{'tui-order-list':scrollTop>=0}">
-			<view class="tui-order-item" v-for="(model,orderIndex) in 3" :key="orderIndex">
+			<view class="tui-order-item" v-for="(item,index) in list" :key="index" @click="detail(item.id)">
 				<tui-list-cell :hover="false" :lineLeft="false">
 					<view class="tui-goods-title">
-						<view>订单号：T201910000</view>
-						<view class="tui-order-status">已完成</view>
+						<view>订单号：{{item.ordernum}}</view>
+						<view class="tui-order-status">{{item.status|formatStatus}}</view>
 					</view>
 				</tui-list-cell>
-				<block v-for="(item,index) in 1" :key="index">
-					<tui-list-cell padding="0" @click="detail">
+				<block v-for="(citem,cindex) in item.suborderinfo" :key="cindex">
+					<tui-list-cell padding="0">
 						<view class="tui-goods-item">
-							<image :src="`/static/images/mall/product/${index+3}.jpg`" class="tui-goods-img"></image>
+							<image :src="citem.thisproduct__image|formatImage" class="tui-goods-img"></image>
 							<view class="tui-goods-center">
-								<view class="tui-goods-name">Linux内核技术实战课</view>
-								<view class="tui-goods-attr">黑色，50ml</view>
+								<view class="tui-goods-name">{{citem.thisproduct__name}}</view>
+								<view class="tui-goods-attr"></view>
 							</view>
 							<view class="tui-price-right">
-								<view>￥298.00</view>
-								<view>x1</view>
+								<view>￥{{citem.thisproduct__trueprice}}</view>
+								<view>x{{citem.num}}</view>
 							</view>
 						</view>
 					</tui-list-cell>
 				</block>
 				<tui-list-cell :hover="false" unlined>
 					<view class="tui-goods-price">
-						<view>共4件商品 合计：</view>
+						<view>共{{item.suborderinfo.length}}件商品 合计：</view>
 						<view class="tui-size-24">￥</view>
-						<view class="tui-price-large">1192</view>
-						<view class="tui-size-24">.00</view>
+						<view class="tui-price-large">{{item.suborderinfo|sumOrderResult}}</view>
 					</view>
 				</tui-list-cell>
 			</view>
-
-			
-
 		</view>
 		<!--加载loadding-->
 		<tui-loadmore v-if="loadding" :index="3" type="red"></tui-loadmore>
 		<tui-nomore v-if="!pullUpOn" backgroundColor="#fafafa"></tui-nomore>
 		<!--加载loadding-->
-
 	</view>
 </template>
 
 <script>
 	export default {
+		filters:{
+			formatStatus(value){
+				const status_arr = ['待支付','已支付','支付失败','订单关闭']
+				return status_arr[value]
+			},
+			formatImage(value){
+				return 'https://chinanets.cn/media' + value.split('all_media')[1]
+			},
+			sumOrderResult(value){
+				let result = 0
+				for(let item of value){
+					result += item.thisproduct__trueprice * item.num
+				}
+				
+				return result
+			}
+		},
 		data() {
 			return {
-				tabs: [{
-					name: "全部"
-				}, {
-					name: "待付款"
-				}, {
-					name: "待发货"
-				}, {
-					name: "待收货"
-				}, {
-					name: "待评价"
-				}],
-				currentTab: 0,
+				list:[],
 				pageIndex: 1,
+				count:0,
 				loadding: false,
 				pullUpOn: true,
 				scrollTop: 0
 			}
 		},
+		onLoad() {
+			this.getAll()
+		},
 		methods: {
-			change(e) {
-				this.currentTab = e.index
-			},
-			detail() {
-				uni.navigateTo({
-					url: '../orderDetail/orderDetail'
+			getAll(){
+				this.tui.request('/order/myorderinfo','GET',{page:this.pageIndex}).then((res) => {
+					if(res.code === 1) {
+						this.pageIndex += 1
+						this.count = res.count
+						this.list = this.list.concat(res.results)
+						uni.setStorageSync('orderlist',this.list)
+					} else {
+						this.tui.toast('获取订单失败')
+					}
+				}).then((err) => {
+					console.log(err)
 				})
+			},
+			detail(id) {
+				this.tui.href('/pages/orderDetail/orderDetail?id='+id)
 			}
 		},
-		onPullDownRefresh() {
-			setTimeout(() => {
-				uni.stopPullDownRefresh()
-			}, 200);
+		computed:{
+			pages(){
+				return Math.ceil(this.count/10)
+			}
 		},
 		onReachBottom() {
-			//只是测试效果，逻辑以实际数据为准
-			this.loadding = true
-			this.pullUpOn = true
-			setTimeout(() => {
-				this.loadding = false
-				this.pullUpOn = false
-			}, 1000)
-		},
-		onPageScroll(e) {
-			this.scrollTop = e.scrollTop;
+			if(this.pages >= this.pageIndex){
+				this.loadding = true
+				this.pullUpOn = true
+				this.getAll()
+			} else {
+				setTimeout(() => {
+					this.loadding = false
+					this.pullUpOn = false
+				}, 1000)
+			}
 		}
 	}
 </script>

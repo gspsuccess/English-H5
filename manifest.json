@@ -1,7 +1,7 @@
 {
-    "name" : "ThorUI组件库",
+    "name" : "Nets考试中心",
     "appid" : "",
-    "description" : "ThorUI跨端项目，uni-app版本，v3编译，支持nvue uni-app编译模式（原weex编译模式），easycom组件模式（无需手动引入，开发工具自带智能感知）",
+    "description" : "Nets考试中心",
     "versionName" : "1.5.2",
     "versionCode" : 120,
     "transformPx" : false,
@@ -98,7 +98,7 @@
         "enable" : false
     },
     "h5" : {
-        "title" : "English H5",
+        "title" : "Nets考试中心",
         "sdkConfigs" : {
             "maps" : {
                 "qqmap" : {
@@ -108,7 +108,7 @@
         },
         "domain" : "https://m.thorui.cn/",
         "router" : {
-            "mode" : "hash",
+            "mode" : "history",
             "base" : "/"
         },
         "optimization" : {

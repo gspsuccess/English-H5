@@ -24,15 +24,32 @@
 <script>
 	export default {
 		data() {
-			return {}
+			return {
+				id:0
+			}
+		},
+		onLoad(option){
+			this.id = option.id
 		},
 		methods: {
 			go(page) {
 				if (page == 1) {
-					this.tui.href("/pages/list/list")
+					uni.switchTab({
+						url:'/pages/list/list'
+					})
 				} else {
-					this.tui.href("/pages/order/order")
+					this.changeStatus()
+					this.tui.href("/pages/orderDetail/orderDetail?id=" + this.id)
 				}
+			},
+			changeStatus(){
+				let orderlist = uni.getStorageSync('orderlist')
+				for(let item of orderlist){
+					if(item.id == this.id){
+						item.status = 1
+					}
+				}
+				uni.setStorageSync('orderlist',orderlist)
 			}
 		}
 	}

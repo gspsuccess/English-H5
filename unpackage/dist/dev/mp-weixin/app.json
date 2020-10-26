@@ -1,0 +1,47 @@
+{
+  "pages": [
+    "pages/list/list",
+    "pages/product/product",
+    "pages/submitOrder/submitOrder",
+    "pages/order/order",
+    "pages/orderDetail/orderDetail",
+    "pages/orderResult/orderResult"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#5677FC",
+    "navigationBarTitleText": "Nets考试中心",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#fafafa",
+    "backgroundColorTop": "#fafafa",
+    "backgroundColorBottom": "#fafafa"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#5677FC",
+    "backgroundColor": "#FFFFFF",
+    "list": [
+      {
+        "pagePath": "pages/list/list",
+        "text": "商品",
+        "iconPath": "static/images/tabbar/product_gray.png",
+        "selectedIconPath": "static/images/tabbar/product_active.png"
+      },
+      {
+        "pagePath": "pages/order/order",
+        "text": "订单",
+        "iconPath": "static/images/tabbar/order_gray.png",
+        "selectedIconPath": "static/images/tabbar/order_active.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于定位效果展示"
+    }
+  },
+  "usingComponents": {},
+  "sitemapLocation": "sitemap18.json"
+}
